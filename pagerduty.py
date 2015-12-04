@@ -24,7 +24,7 @@ class PagerDutyNotifier(object):
             sys.stderr.write(str(payload) + '\n')
             if headers['eventname'] == 'PROCESS_STATE_FATAL':
                 details = {}
-                self.send(payload, headers, 'trigger', '{} service has crashed unexpectedly on {}'.format(payload['processname'], socket.gethostname()), details)
+                self.send(payload, headers, 'trigger', '{0} service has crashed unexpectedly on {1}'.format(payload['processname'], socket.gethostname()), details)
             if headers['eventname'] == 'PROCESS_STATE_RUNNING':
                 details = { 'fixed at': time.strftime("%c") }
                 self.send(payload, headers, 'resolve', 'Process recreated by supervisor', details)
@@ -35,8 +35,8 @@ class PagerDutyNotifier(object):
                 self.status = True
             sys.stderr.flush()
     def send(self, payload, headers, event_type, description, details):
-        incident_key = '{}/{}'.format(socket.gethostname(), payload['processname'])
-        client = '{}'.format(headers['server'])
+        incident_key = '{0}/{1}'.format(socket.gethostname(), payload['processname'])
+        client = '{0}'.format(headers['server'])
 
         details = dict(details, **headers)
         details = dict(details, **payload)
@@ -51,10 +51,10 @@ class PagerDutyNotifier(object):
         try:
             res = urllib2.urlopen(self.pd_url, json.dumps(data))
         except urllib2.HTTPError, ex:
-            sys.stderr.write('{} - {}\n{}\n'.format(ex.code, ex.reason, ex.read()))
+            sys.stderr.write('{0} - {1}\n{2}\n'.format(ex.code, ex.reason, ex.read()))
             self.status = False
         else:
-            sys.stderr.write('{}, {}\n'.format(res.code, res.msg))
+            sys.stderr.write('{0}, {1}\n'.format(res.code, res.msg))
 
 if __name__ == '__main__':
     pager_duty_service_key = sys.argv[1]
