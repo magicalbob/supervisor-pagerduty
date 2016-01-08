@@ -22,9 +22,10 @@ class PagerDutyNotifier(object):
             sys.stderr.write(str(headers) + '\n')
             payload = dict(v.split(':') for v in payload.split(' '))
             sys.stderr.write(str(payload) + '\n')
-            if headers['eventname'] == 'PROCESS_STATE_FATAL':
+            if headers['eventname'] == 'PROCESS_STATE_EXITED':
                 details = {}
-                self.send(payload, headers, 'trigger', '{0} service has crashed unexpectedly on {1}'.format(payload['processname'], socket.gethostname()), details)
+                mess_txt='%s service has crashed unexpectedly on %s' % (payload['processname'], socket.gethostname())
+                self.send(payload, headers, 'trigger', mess_txt, details)
             if headers['eventname'] == 'PROCESS_STATE_RUNNING':
                 details = { 'fixed at': time.strftime("%c") }
                 self.send(payload, headers, 'resolve', 'Process recreated by supervisor', details)
@@ -35,8 +36,8 @@ class PagerDutyNotifier(object):
                 self.status = True
             sys.stderr.flush()
     def send(self, payload, headers, event_type, description, details):
-        incident_key = '{0}/{1}'.format(socket.gethostname(), payload['processname'])
-        client = '{0}'.format(headers['server'])
+        incident_key = '%s/%s' % (socket.gethostname(), payload['processname'])
+        client = '%s' % (headers['server'])
 
         details = dict(details, **headers)
         details = dict(details, **payload)
@@ -51,13 +52,12 @@ class PagerDutyNotifier(object):
         try:
             res = urllib2.urlopen(self.pd_url, json.dumps(data))
         except urllib2.HTTPError, ex:
-            sys.stderr.write('{0} - {1}\n{2}\n'.format(ex.code, ex.reason, ex.read()))
+            sys.stderr.write('%s - %s\n%s\n' % (ex.code, ex.reason, ex.read()))
             self.status = False
         else:
-            sys.stderr.write('{0}, {1}\n'.format(res.code, res.msg))
+            sys.stderr.write('%s, %s\n' % (res.code, res.msg))
 
 if __name__ == '__main__':
     pager_duty_service_key = sys.argv[1]
     pager_duty_notifer = PagerDutyNotifier(pager_duty_service_key)
     pager_duty_notifer.run()
-
